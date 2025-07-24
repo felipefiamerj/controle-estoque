@@ -97,6 +97,7 @@ def movimentar_estoque(produto_id, tipo, quantidade):
     conn.commit()
     conn.close()
 
+
 # ===============================
 # INTERFACE STREAMLIT
 # ===============================
@@ -145,16 +146,15 @@ elif aba == "Visualizar estoque":
     if df_produtos.empty:
         st.info("Nenhum produto cadastrado.")
     else:
-        # Destacar estoque abaixo do mínimo
-        def destacar_linha(row):
-            if row["estoque"] <= row["estoque_minimo"]:
-                return ['background-color: #ffcccc'] * len(row)
-            else:
-                return [''] * len(row)
+        def destacar_linha(df):
+            mask = df['estoque'] <= df['estoque_minimo']
+            return df.style.apply(lambda x: ['']*len(x)).set_properties(**{
+                'background-color': "#440000",
+                'color': 'white'
+            }, subset=pd.IndexSlice[mask, :])
 
-        st.dataframe(df_produtos.style.apply(destacar_linha, axis=1))
+        st.dataframe(destacar_linha(df_produtos))
 
-        # Botão para exportar para Excel
         buffer = io.BytesIO()
         with pd.ExcelWriter(buffer, engine='xlsxwriter') as writer:
             df_produtos.to_excel(writer, index=False, sheet_name='Estoque')
@@ -165,6 +165,7 @@ elif aba == "Visualizar estoque":
             file_name="estoque.xlsx",
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         )
+
 
 # ===============================
 # ABA 3 – Movimentar Estoque
